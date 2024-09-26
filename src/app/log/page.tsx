@@ -45,19 +45,13 @@ const LoginPage = () => {
   // HANDLE LOGIN SUBMIT
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-        
-    // CHECK INTERNET CONNECTION
-    if (!navigator.onLine) {
-      alert("No internet connection. Please check your connection and try again.");
-      return; 
-    }
 
     // Validation
-    const validatedFormData = signInSchema.safeParse(formValue);
+    const validateFormData = signInSchema.safeParse(formValue);
 
-    if (!validatedFormData.success) {
+    if (!validateFormData.success) {
       const errors: FormErrors = {};
-      validatedFormData.error.errors.forEach((err) => {
+      validateFormData.error.errors.forEach((err) => {
         if (err.path[0]) {
           errors[err.path[0] as keyof FormValues] = err.message;
         }
@@ -71,7 +65,7 @@ const LoginPage = () => {
 
   return (
     <div className="w-full h-screen flex justify-center items-center text-sm">
-      <div className="w-96 flex flex-col gap-7 bg-white text-black border border-gray-300 rounded-lg shadow-lg px-6 py-10 sm:px-10">
+      <div className="w-96 flex flex-col gap-7 bg-white text-black rounded-lg border border-gray-300 px-6 py-10 sm:px-10">
         <h1 className="text-2xl font-bold text-center">
           Log in to your account
         </h1>
@@ -112,7 +106,6 @@ const LoginPage = () => {
               value={formValue.email}
               onChange={handleChange}
             />
-            {/* ERROR DISPLAY */}
             {formError.email && (
               <p className="text-sm text-red-500">{formError.email}</p>
             )}
@@ -120,33 +113,29 @@ const LoginPage = () => {
 
           {/* PASSWORD */}
           <div className="flex flex-col gap-1 relative">
-            <div className="relative">
-              <input
-                className="w-full border border-gray-300 outline-none rounded-md py-2 px-4"
-                type={isPasswordVisible ? "text" : "password"}
-                name="password"
-                placeholder="Password"
-                value={formValue.password}
-                onChange={handleChange}
-              />
-              {/* SHOW PASSWORD */}
-              {isPasswordVisible ? (
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
-                  <FaEye
-                    onClick={() => setIsPasswordVisible(!isPasswordVisible)}
-                  />
-                </span>
-              ) : (
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
-                  <FaEyeSlash
-                    onClick={() => setIsPasswordVisible(!isPasswordVisible)}
-                  />
-                </span>
-              )}
-            </div>
-            {/* ERROR DISPLAY */}
+            <input
+              className="border border-gray-300 outline-gray-300 rounded-md py-2 px-4"
+              type={isPasswordVisible ? "text" : "password"}
+              name="password"
+              placeholder="Password"
+              value={formValue.password}
+              onChange={handleChange}
+            />
             {formError.password && (
               <p className="text-sm text-red-500">{formError.password}</p>
+            )}
+            {isPasswordVisible ? (
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
+                <FaEye
+                  onClick={() => setIsPasswordVisible(!isPasswordVisible)}
+                />
+              </span>
+            ) : (
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
+                <FaEyeSlash
+                  onClick={() => setIsPasswordVisible(!isPasswordVisible)}
+                />
+              </span>
             )}
           </div>
 

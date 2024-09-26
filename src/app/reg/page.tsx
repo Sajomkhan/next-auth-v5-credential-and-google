@@ -182,27 +182,33 @@ const RegisterPage = () => {
           </div>
           {/* PASSWORD */}
           <div className="flex flex-col gap-1 relative">
-            <input
-              className="border border-gray-300 outline-gray-300 rounded-md py-2 px-4"
-              type={isPasswordVisible ? "text" : "password"}
-              name="password"
-              placeholder="Password"
-              onChange={handleChange}
-            />
-            <p className="text-sm text-red-500">{formError.password}</p>
-            {/* SHOW PASSWORD */}
-            {isPasswordVisible ? (
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
-                <FaEye
-                  onClick={() => setIsPasswordVisible(!isPasswordVisible)}
-                />
-              </span>
-            ) : (
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
-                <FaEyeSlash
-                  onClick={() => setIsPasswordVisible(!isPasswordVisible)}
-                />
-              </span>
+            <div className="relative">
+              <input
+                className="w-full border border-gray-300 outline-none rounded-md py-2 px-4"
+                type={isPasswordVisible ? "text" : "password"}
+                name="password"
+                placeholder="Password"
+                value={formValue.password}
+                onChange={handleChange}
+              />
+              {/* EYE ICON*/}
+              {isPasswordVisible ? (
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
+                  <FaEye
+                    onClick={() => setIsPasswordVisible(!isPasswordVisible)}
+                  />
+                </span>
+              ) : (
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
+                  <FaEyeSlash
+                    onClick={() => setIsPasswordVisible(!isPasswordVisible)}
+                  />
+                </span>
+              )}
+            </div>
+            {/* ERROR DISPLAY */}
+            {formError.password && (
+              <p className="text-sm text-red-500">{formError.password}</p>
             )}
           </div>
 

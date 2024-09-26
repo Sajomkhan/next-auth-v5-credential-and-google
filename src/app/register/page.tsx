@@ -1,94 +1,104 @@
 "use client";
-import { login } from "@/actions/authActions";
-import { useEffect, useState } from "react";
+import { login, register } from "@/actions/authActions";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { FaEye, FaEyeSlash, FaGithub, FaGoogle } from "react-icons/fa";
+import { z } from "zod";
 
-type FormValues = {
-  username: string;
-  fname: string;
-  lname: string;
+// CHECK THE VALIDITY OF THE FORM
+const registerSchema = z.object({
+  name: z
+    .string({ required_error: "Name is requrired" })
+    .min(3, "Name must be more than 3 character")
+    .max(32, "Name must be less than 32 character"),
+  email: z
+    .string({ required_error: "Email is required" })
+    .min(1, "Email is required")
+    .email("Invalid email"),
+  password: z
+    .string({ required_error: "Passowrd" })
+    .min(1, "Password is required")
+    .min(4, "Password must be more than 4 characters")
+    .max(32, "Password must be less than 32 characters"),
+});
+
+// TYPES FOR FORM
+export type FormValues = {
+  name: string;
+  email: string;
   password: string;
 };
 
+// TYPES FOR FORM ERRORS
+type FormErrors = Partial<Record<keyof FormValues, string>> & {
+  general?: string;
+};
+
+// REGISTER COMPONENTS
 const RegisterPage = () => {
   const [formValue, setFormValue] = useState<FormValues>({
-    username: "",
-    fname: "",
-    lname: "",
+    name: "",
+    email: "",
     password: "",
   });
 
-  const [formError, setFormError] = useState<FormValues>({
-    username: "",
-    fname: "",
-    lname: "",
-    password: "",
-  });
-  const [isSubmit, setIsSubmit] = useState(false);
+  const [formError, setFormError] = useState<FormErrors>({});
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const { pending } = useFormStatus();
+  const router = useRouter();
 
   // HANDLE CHANGE OF INPUT FIELDS
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormValue({ ...formValue, [e.target.name]: e.target.value });
   };
 
-  // CHECK THE VALIDITY OF THE FORM
-  const validate = (values: FormValues) => {
-    const error: any = {};
-
-    // Username validation
-    if (!values.username) {
-      error.username = "Username is required";
-    } else if (values.username.length < 2 || values.username.length > 30) {
-      error.username = "Username must be between 2 and 30 characters";
-    }
-
-    // First name validation
-    if (!values.fname) {
-      error.fname = "First name is required";
-    } else if (values.fname.length < 2 || values.fname.length > 30) {
-      error.fname = "First name must be between 2 and 30 characters";
-    }
-
-    // Last name validation
-    if (!values.lname) {
-      error.lname = "Last name is required";
-    } else if (values.lname.length > 30) {
-    error.lname = "Last name must be between 2 and 30 characters";
-  }
-
-    // Password validation
-    if (!values.password) {
-      error.password = "Password is required";
-    } else if (values.password.length < 4 || values.password.length > 30) {
-      error.password = "Password must be at least 4 characters";
-    }
-    return error;
-  };
-
-  // HANDLE CHANGE OF INPUT FIELDS
-  useEffect(() => {
-    console.log(formError);
-    if (Object.keys(formError).length === 0 && isSubmit) {
-      console.log(formValue);
-    }
-  }, [formError]);
-
   // HANDLE REGISTER SUBMIT
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setFormError(validate(formValue));
-    setIsSubmit(true);
-    // if (Object.keys(formError).length === 0 && isSubmit) {
-    //   console.log(formValue);
-    // login("credential", formValue);
+
+    // CHECK INTERNET CONNECTION
+    if (!navigator.onLine) {
+      alert(
+        "No internet connection. Please check your connection and try again."
+      );
+      return;
+    }
+
+    // Validation
+    const validatedFormData = registerSchema.safeParse(formValue);
+
+    if (!validatedFormData.success) {
+      const errors: FormErrors = {};
+      validatedFormData.error.errors.forEach((err) => {
+        if (err.path[0]) {
+          errors[err.path[0] as keyof FormValues] = err.message;
+        }
+      });
+      setFormError(errors);
+    } else {
+      // Register Action
+      try {
+        const result = await register(validatedFormData.data);
+        if (result.success) {
+          setFormError({});
+          router.push("/login");
+        } else {
+          alert(result.error);
+          setFormError({ general: result.error });  // Server error catching
+        }
+      } catch (err) {
+        console.error("An unexpected error occurred:", err);
+        setFormError({
+          general: "An unexpected error occurred. Please try again.",
+        });
+      }
+    }
   };
 
   return (
     <div className="w-full h-screen flex justify-center items-center text-sm">
-      <div className="w-96 flex flex-col gap-7 bg-white text-black rounded-lg px-6 py-10 sm:px-10">
+      <div className="w-96 flex flex-col gap-7 bg-white text-black border border-gray-300 rounded-lg shadow-lg px-6 py-10 sm:px-10">
         <h1 className="text-2xl font-bold text-center">Create your account</h1>
 
         {/* EXPERNAL PROVIDER */}
@@ -125,59 +135,61 @@ const RegisterPage = () => {
             <input
               className="border border-gray-300 outline-gray-300 rounded-md py-2 px-4"
               type="text"
-              name="username"
-              placeholder="Username"
+              name="name"
+              placeholder="Name"
               onChange={handleChange}
             />
-            <p className="text-sm text-red-500">{formError.username}</p>
+            <p className="text-sm text-red-500">{formError.name}</p>
           </div>
           {/* FIRST NAME */}
           <div className="flex flex-col gap-1">
             <input
               className="border border-gray-300 outline-gray-300 rounded-md py-2 px-4"
               type="text"
-              name="fname"
-              placeholder="First Name"
+              name="email"
+              placeholder="Email"
               onChange={handleChange}
             />
-            <p className="text-sm text-red-500">{formError.fname}</p>
-          </div>
-          {/* LAST NAME */}
-          <div className="flex flex-col gap-1">
-            <input
-              className="border border-gray-300 outline-gray-300 rounded-md py-2 px-4"
-              type="text"
-              name="lname"
-              placeholder="Last Name"
-              onChange={handleChange}
-            />
-            <p className="text-sm text-red-500">{formError.lname}</p>
+            <p className="text-sm text-red-500">{formError.email}</p>
           </div>
           {/* PASSWORD */}
           <div className="flex flex-col gap-1 relative">
-            <input
-              className="border border-gray-300 outline-gray-300 rounded-md py-2 px-4"
-              type={isPasswordVisible ? "text" : "password"}
-              name="password"
-              placeholder="Password"
-              onChange={handleChange}
-            />
-            <p className="text-sm text-red-500">{formError.password}</p>
-            {/* SHOW PASSWORD */}
-            {isPasswordVisible ? (
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
-                <FaEye
-                  onClick={() => setIsPasswordVisible(!isPasswordVisible)}
-                />
-              </span>
-            ) : (
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
-                <FaEyeSlash
-                  onClick={() => setIsPasswordVisible(!isPasswordVisible)}
-                />
-              </span>
+            <div className="relative">
+              <input
+                className="w-full border border-gray-300 outline-none rounded-md py-2 px-4"
+                type={isPasswordVisible ? "text" : "password"}
+                name="password"
+                placeholder="Password"
+                value={formValue.password}
+                onChange={handleChange}
+              />
+              {/* SHOW PASSWORD*/}
+              {isPasswordVisible ? (
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
+                  <FaEye
+                    onClick={() => setIsPasswordVisible(!isPasswordVisible)}
+                  />
+                </span>
+              ) : (
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
+                  <FaEyeSlash
+                    onClick={() => setIsPasswordVisible(!isPasswordVisible)}
+                  />
+                </span>
+              )}
+            </div>
+            {/* ERROR DISPLAY */}
+            {formError.password && (
+              <p className="text-sm text-red-500">{formError.password}</p>
             )}
           </div>
+          
+        {/* Display General Errors */}
+        {formError.general && (
+          <p className="text-red-500 text-center">
+            {formError.general}
+          </p>
+        )}
 
           <div className="flex items-center justify-between">
             {/* GO FOR SING UP */}

@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import type { Metadata } from "next";
-import Navbar from "../components/Navbar";
 import { redirect } from "next/navigation";
+import Navbar from "../components/navbar/Navbar";
 
 export const metadata: Metadata = {
   title: "Admin Page",
@@ -15,13 +15,13 @@ export default async function AuthinticateLayout({
 }>) {
   const session = await auth();
 
-  if(!session?.user) {
+  if (!session?.user) {
     return redirect("/login");
   }
 
   return (
-    <div className="mx-auto max-w-screen-xl h-screen flex flex-col px-4 sm:px-6 md:px-8">
-      <Navbar />
+    <div className="w-full h-screen flex flex-col ">
+      <Navbar session={session}/>
       <div className="flex-grow">{children}</div>
     </div>
   );
